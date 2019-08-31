@@ -3,6 +3,7 @@
 namespace Zakhayko\Translator;
 
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
+use Zakhayko\Translator\Commands\TranslatorDelete;
 
 class ServiceProvider extends BaseServiceProvider
 {
@@ -26,6 +27,9 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function boot()
     {
+        $this->commands([
+            TranslatorDelete::class,
+        ]);
         $this->publishes([
             __DIR__.'/config.php' => config_path('translator.php'),
         ]);

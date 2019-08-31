@@ -39,7 +39,7 @@ class TranslatorContainer
         if ($this->enabled===null) $this->enabled = config('translator.enabled');
         return $this->enabled;
     }
-    
+
     private function makeReplacements($line, $replace) {
         if (count($replace)) {
             foreach ($replace as $key => $value) {
@@ -53,6 +53,33 @@ class TranslatorContainer
         return $line;
     }
 
+    private function accomplishKey($key) {
+        if (strpos($key, '.')===false) $key = 'app.'.$key;
+        return $key;
+    }
+
+    public function deleteTranslation($key){
+        $this->pullContent();
+        $accomplishedKey = $this->accomplishKey($key);
+        $key = explode('.',$accomplishedKey);
+        $count = count($key);
+        if ($count>3 || $count<2 || !isset($this->content[$key[0]][$key[1]])) return false;
+        if ($count==2) {
+            if (is_array($this->content[$key[0]][$key[1]])) return null;
+            unset($this->content[$key[0]][$key[1]]);
+        }
+        else {
+            $array_key = array_search($key[2], $this->content[$key[0]][$key[1]]);
+            if ($array_key === false) return false;
+            unset($this->content[$key[0]][$key[1]][$array_key]);
+            if (!count($this->content[$key[0]][$key[1]])) unset($this->content[$key[0]][$key[1]]);
+            else $this->content[$key[0]][$key[1]] = array_values($this->content[$key[0]][$key[1]]);
+        }
+        if (!count($this->content[$key[0]])) unset($this->content[$key[0]]);
+        $this->putContent();
+        return $accomplishedKey;
+    }
+
     /**
      * @param $key
      * @param array $replace
@@ -62,7 +89,7 @@ class TranslatorContainer
      * @throws \Exception
      */
     public function translate(string $key, array $replace = [], $locale=null, $add_to_json=true){
-        if (strpos($key, '.')===false) $key = 'app.'.$key;
+        $key = $this->accomplishKey($key);
         $realKey = $this->key($key);
         if (Lang::hasForLocale($realKey, $locale)) return Lang::get($realKey, $replace, $locale);
         if (strpos($key, '[')!==false || strpos($key, ']')!==false) throw new \Exception('Dont use these characters: "], [".');
